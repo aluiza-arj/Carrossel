@@ -189,12 +189,13 @@ function parse(txt){
   for(var i=0;i<lines.length;i++){
     var ln=lines[i].trim();
 
-    // ── CORREÇÃO: aceita "Slide N | Tipo" E "Slide N" (sem pipe) ──
-    var sm=ln.match(/^Slide\s+(\d+)(?:\s*[|–-]\s*(.+))?$/i);
+    // ── CORREÇÃO: aceita "Slide N | Tipo", "Slide N — [E]", "Slide N" ──
+    var sm=ln.match(/^Slide\s+(\d+)(?:\s*[|–—\-]\s*(.+))?$/i);
     if(sm){
       if(cur){saveField();r.slides.push(cur);}
       var tipo=(sm[2]||'').trim();
-      var lm=tipo.match(/\[Layout\s*([A-Za-z])\]/i);
+      // aceita [Layout X] e também shorthand [X]
+      var lm=tipo.match(/\[(?:Layout\s*)?([A-Za-z])\]/i);
       var layout=lm?lm[1].toUpperCase():detectLayout(tipo);
       tipo=tipo.replace(/\[Layout\s*[A-Za-z]\]/i,'').trim();
       cur={n:parseInt(sm[1]),tipo:tipo||'Slide '+(parseInt(sm[1])),layout:layout,titulo:'',subtitulo:'',corpo:'',foto:'',pill:'',cta:'',img:null,imgX:50,imgY:50};
