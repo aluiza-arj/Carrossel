@@ -377,41 +377,40 @@ async function baixarSlide(n) {
   toast('Gerando imagem...');
   try {
     await document.fonts.ready;
-    var W = proporcao === 'feed' ? 1080 : 810;
-    var H = proporcao === 'feed' ? 1350 : 1440;
-    var container = document.createElement('div');
-    container.style.cssText = ['position:fixed','left:-9999px','top:0','width:'+W+'px','height:'+H+'px','overflow:hidden','z-index:-1','background:#FDF9F0'].join(';');
     var previewW = proporcao === 'feed' ? 270 : 190;
-    var scale = W / previewW;
-    var inner = document.createElement('div');
-    inner.style.cssText = ['width:'+previewW+'px','height:'+(H/scale)+'px','transform:scale('+scale+')','transform-origin:top left','overflow:hidden'].join(';');
+    var previewH = proporcao === 'feed' ? 338 : 338;
+    var H = proporcao === 'feed' ? 1350 : 1920;
+    var scale = H / previewH;
+
     var originalCard = document.getElementById('card-' + n);
     if (!originalCard) { toast('Slide não encontrado.'); return; }
+
+    // Clonar o card e posicionar off-screen sem nenhum transform
     var clonedCard = originalCard.cloneNode(true);
-    clonedCard.style.width = previewW + 'px';
-    clonedCard.style.height = (H/scale) + 'px';
-    clonedCard.id = 'clone-card-' + n;
-    inner.appendChild(clonedCard);
-    container.appendChild(inner);
-    document.body.appendChild(container);
-    await new Promise(function(r){ setTimeout(r, 150); });
+    clonedCard.id = 'export-' + n;
+    clonedCard.style.cssText = 'position:fixed;left:-9999px;top:0;width:'+previewW+'px;height:'+previewH+'px;overflow:hidden;z-index:-1;';
+    document.body.appendChild(clonedCard);
+
+    await new Promise(function(r){ setTimeout(r, 200); });
     await document.fonts.ready;
-    var cv = await html2canvas(container, {
-      scale: window.devicePixelRatio || 2,
-      backgroundColor: '#FDF9F0',
+
+    var cv = await html2canvas(clonedCard, {
+      scale: scale,
+      backgroundColor: null,
       useCORS: true,
       allowTaint: true,
       logging: false,
-      width: W,
-      height: H
+      width: previewW,
+      height: previewH
     });
-    document.body.removeChild(container);
+    document.body.removeChild(clonedCard);
     var a = document.createElement('a');
     a.download = 'anna-araujo-slide-' + n + '.png';
     a.href = cv.toDataURL('image/png', 1.0);
     a.click();
-    toast('Slide salvo!');
+    toast('Slide ' + n + ' salvo!');
   } catch(e) {
+    document.querySelectorAll('[id^="export-"]').forEach(function(el){ el.remove(); });
     toast('Erro ao gerar. Tente novamente.');
     console.error(e);
   }
