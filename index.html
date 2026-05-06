@@ -385,25 +385,38 @@ async function baixarSlide(n) {
     var originalCard = document.getElementById('card-' + n);
     if (!originalCard) { toast('Slide não encontrado.'); return; }
 
-    // Clonar o card e posicionar off-screen sem nenhum transform
-    var clonedCard = originalCard.cloneNode(true);
-    clonedCard.id = 'export-' + n;
-    clonedCard.style.cssText = 'position:fixed;left:-9999px;top:0;width:'+previewW+'px;height:'+previewH+'px;overflow:hidden;z-index:-1;';
-    document.body.appendChild(clonedCard);
+    // Clonar e posicionar NO viewport (0,0) com z-index alto
+    // html2canvas exige que o elemento esteja no viewport para capturar corretamente
+    var clone = originalCard.cloneNode(true);
+    clone.id = 'export-' + n;
+    clone.style.cssText = [
+      'position:fixed', 'left:0', 'top:0',
+      'width:'+previewW+'px', 'height:'+previewH+'px',
+      'overflow:hidden', 'z-index:99999',
+      'pointer-events:none'
+    ].join(';');
+    document.body.appendChild(clone);
 
-    await new Promise(function(r){ setTimeout(r, 200); });
+    // Aguardar render e fontes
+    await new Promise(function(r){ setTimeout(r, 300); });
     await document.fonts.ready;
 
-    var cv = await html2canvas(clonedCard, {
+    var cv = await html2canvas(clone, {
       scale: scale,
       backgroundColor: null,
       useCORS: true,
       allowTaint: true,
       logging: false,
       width: previewW,
-      height: previewH
+      height: previewH,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0
     });
-    document.body.removeChild(clonedCard);
+
+    document.body.removeChild(clone);
+
     var a = document.createElement('a');
     a.download = 'anna-araujo-slide-' + n + '.png';
     a.href = cv.toDataURL('image/png', 1.0);
